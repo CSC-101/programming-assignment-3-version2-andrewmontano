@@ -175,34 +175,60 @@ reduced_data = [
         'WY')
     ]
 
-class TestCases(unittest.TestCase):
-    pass
+import unittest
+from hw3 import CountyDemographics, load_data, find_max_county, filter_counties
 
-    # Part 1
-    # test population_total
+# Task 1: Test CountyDemographics class
+class TestCountyDemographics(unittest.TestCase):
+    def test_init(self):
+        age = {"0-18": 25.0, "19-64": 60.0, "65+": 15.0}
+        county = "Test County"
+        education = {"High School": 40.0, "Bachelor's": 35.0, "Graduate": 25.0}
+        ethnicities = {"White": 50.0, "Hispanic": 30.0, "Black": 10.0, "Other": 10.0}
+        income = {"Median": 55000.0}
+        population = {"Total": 100000.0}
+        state = "Test State"
 
-    # Part 2
-    # test filter_by_state
+        demo = CountyDemographics(age, county, education, ethnicities, income, population, state)
 
-    # Part 3
-    # test population_by_education
-    # test population_by_ethnicity
-    # test population_below_poverty_level
+        self.assertEqual(demo.county, "Test County")
+        self.assertEqual(demo.state, "Test State")
+        self.assertEqual(demo.age["0-18"], 25.0)
+        self.assertEqual(demo.income["Median"], 55000.0)
 
-    # Part 4
-    # test percent_by_education
-    # test percent_by_ethnicity
-    # test percent_below_poverty_level
+# Task 2: Test load_data function
+class TestLoadData(unittest.TestCase):
+    def test_load_data(self):
+        counties = load_data("sample_data.csv")
+        self.assertIsInstance(counties, list)
+        self.assertTrue(len(counties) > 0)
+        self.assertIsInstance(counties[0], CountyDemographics)
 
-    # Part 5
-    # test education_greater_than
-    # test education_less_than
-    # test ethnicity_greater_than
-    # test ethnicity_less_than
-    # test below_poverty_level_greater_than
-    # test below_poverty_level_less_than
+# Task 3: Test find_max_county function
+class TestFindMaxCounty(unittest.TestCase):
+    def test_find_max_county(self):
+        counties = [
+            CountyDemographics({}, "A", {}, {}, {"Median": 50000}, {"Total": 200000}, "X"),
+            CountyDemographics({}, "B", {}, {}, {"Median": 60000}, {"Total": 300000}, "Y"),
+            CountyDemographics({}, "C", {}, {}, {"Median": 55000}, {"Total": 250000}, "Z")
+        ]
+        max_county = find_max_county(counties, "Median")
+        self.assertEqual(max_county.county, "B")
 
+# Task 4: Test filter_counties function
+class TestFilterCounties(unittest.TestCase):
+    def test_filter_counties(self):
+        counties = [
+            CountyDemographics({}, "A", {}, {}, {"Median": 50000}, {"Total": 200000}, "X"),
+            CountyDemographics({}, "B", {}, {}, {"Median": 60000}, {"Total": 300000}, "Y"),
+            CountyDemographics({}, "C", {}, {}, {"Median": 40000}, {"Total": 250000}, "Z")
+        ]
+        filtered = filter_counties(counties, "Median", 45000)
+        self.assertEqual(len(filtered), 2)
+        self.assertTrue(any(c.county == "A" for c in filtered))
+        self.assertTrue(any(c.county == "B" for c in filtered))
 
-
+# Task 5: Run all tests
 if __name__ == '__main__':
     unittest.main()
+
