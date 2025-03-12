@@ -1,75 +1,171 @@
-# Task 1: Define CountyDemographics class
-class CountyDemographics:
-    def __init__(self, age: dict[str, float], county: str, education: dict[str, float],
-                 ethnicities: dict[str, float], income: dict[str, float],
-                 population: dict[str, float], state: str):
-        self.age = age
-        self.county = county
-        self.education = education
-        self.ethnicities = ethnicities
-        self.income = income
-        self.population = population
-        self.state = state
+from data import CountyDemographics
+import build_data
 
-    def __repr__(self):
-        return f'CountyDemographics({self.age}, {self.county}, {self.education}, {self.ethnicities}, {self.income}, {self.population}, {self.state})'
-# Task 2: Function to compute total population
-def total_population(county: CountyDemographics) -> float:
-    return sum(county.population.values())
-# Task 3: Function to compute average income
-def average_income(county: CountyDemographics) -> float:
-    return sum(county.income.values()) / len(county.income) if county.income else 0
+#Part 1
+#a function that returns the total population when given a list of county demographics objects
+#input: list[CountyDemographics]
+#output: int
+def population_total(CD_lst:list[CountyDemographics]) -> int:
+    sum_population = 0
+    for county in CD_lst:
+        pop_CD = county.population.get('2014 Population')
+        sum_population += pop_CD
+    return sum_population
 
+#Part 2
+#A function that takes in the data set with a state and returns a list of all counties in a specific state
+# input: list of country demographics objects and a string that represents a state's initials.
+# output: a list of county demographics objects
+def filter_by_state(CD_lst:list[CountyDemographics], State:str) -> list[CountyDemographics]:
+    filter_lst = []
+    for County in CD_lst:
+        if County.state == State:
+            filter_lst.append(County)
+    return filter_lst
 
-# Task 4: Function to find largest ethnic group
-def largest_ethnic_group(county: CountyDemographics) -> str:
-    return max(county.ethnicities, key=county.ethnicities.get)
+#Part 3
+#A function that takes in the data set and a string to find the population part of that category
+# input:list of country demographics objects and a string that represents a category
+# output: a float
+def population_by_education(CD_lst:list[CountyDemographics], Ed:str) -> float:
+    pop_total = 0
+    for County in CD_lst:
+        if County.education.get(Ed):
+            ed_per = County.education.get(Ed)/100
+            pop_total +=  County.population.get('2014 Population') * ed_per
+    return pop_total
 
+#A function that takes in the data set and a string to find the population part of the ethnicities category
+# input: list of country demographics objects and a string that represents a category
+# output: a float
+def population_by_ethnicity(CD_lst:list[CountyDemographics], eth:str) -> float:
+    pop_total = 0
+    for County in CD_lst:
+        if County.ethnicities.get(eth):
+            eth_per = County.ethnicities.get(eth)/100
+            pop_total += County.population.get('2014 Population') * eth_per
+    return pop_total
 
-# Task 5: Function to categorize education levels
-def categorize_education(county: CountyDemographics) -> str:
-    higher_education_rate = county.education.get("Bachelor's Degree", 0) + county.education.get("Graduate Degree", 0)
-    if higher_education_rate > 50:
-        return "Highly Educated"
-    elif higher_education_rate > 25:
-        return "Moderately Educated"
-    else:
-        return "Less Educated"
+#A function that takes in the data set and a string to find the population part of
+# the below poverty level category in income
+# input: list of country demographics objects and a string that represents a category
+# output: a float
+def population_below_poverty_level(CD_lst:list[CountyDemographics]) -> float:
+    pop_total = 0
+    for County in CD_lst:
+        bpl_per = County.income.get('Persons Below Poverty Level')/100
+        pop_total += County.population.get('2014 Population') * bpl_per
+    return pop_total
 
+#Part 4
+#A function that takes in the data set and a string representing a
+# category in education and returns the percentage of the population out of the total
+# input: list of country demographics objects and a string that represents a category
+# output: a float
+def percent_by_education(CD_lst:list[CountyDemographics], ed:str)-> float:
+    pop_total = population_total(CD_lst)
+    ed_total = population_by_education(CD_lst, ed)
+    try:
+        ed_percent = ed_total/pop_total
+    except ZeroDivisionError:
+        ed_percent = 0.0
+    return ed_percent*100
 
+#A function that takes in the data set and a string representing a
+# category in ethnicities and returns the percentage of the population out of the total
+# input: list of country demographics objects and a string that represents a category
+# output: a float
+def percent_by_ethnicity(CD_lst:list[CountyDemographics], eth:str)-> float:
+    pop_total = population_total(CD_lst)
+    eth_total = population_by_ethnicity(CD_lst, eth)
+    try:
+        eth_percent = eth_total/pop_total
+    except ZeroDivisionError:
+        eth_percent = 0.0
+    return eth_percent*100
 
+#A function that takes in the data set and returns the
+# percentage the population below poverty level out of the total population
+# input: list of country demographics objects and a string that represents a category
+# output: a float
+def percent_below_poverty_level(CD_lst:list[CountyDemographics])-> float:
+    pop_total = population_total(CD_lst)
+    bpl_total = population_below_poverty_level(CD_lst)
+    try:
+        bpl_percent = bpl_total / pop_total
+    except ZeroDivisionError:
+        bpl_percent = 0.0
+    return bpl_percent * 100
 
+#Part 5
+#A function that lists the counties with a specific education category percentage
+# greater than the given percentage.
+#input: a list of CountyDemographics objects, a string, and a float representing a percent
+#output: a list of CountyDemographics objects
+def education_greater_than(CD_lst:list[CountyDemographics], ed:str, percent:float) -> list[CountyDemographics]:
+    filter_lst = []
+    for county in CD_lst:
+        compare_percent = county.education.get(ed)
+        if compare_percent > percent:
+            filter_lst.append(county)
+    return filter_lst
 
-#Load data from a CSV file
-def load_data(filename: str) -> list:
-    counties = []
-    with open(filename, mode='r') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            # Assuming your CSV columns match the keys for CountyDemographics
-            age = {"0-18": float(row["age_0_18"]), "19-64": float(row["age_19_64"]), "65+": float(row["age_65_plus"])}
-            education = {"High School": float(row["education_highschool"]),
-                         "Bachelor's": float(row["education_bachelors"]),
-                         "Graduate": float(row["education_graduate"])}
-            ethnicities = {"White": float(row["ethnicity_white"]), "Hispanic": float(row["ethnicity_hispanic"]),
-                           "Black": float(row["ethnicity_black"]), "Other": float(row["ethnicity_other"])}
-            income = {"Median": float(row["income_median"])}
-            population = {"Total": float(row["population_total"])}
-            state = row["state"]
-            county = row["county"]
+#A function that lists the counties with a specific education category percentage
+# less than the given percentage.
+#input: a list of CountyDemographics objects, a string, and a float representing a percent
+#output: a list of CountyDemographics objects
+def education_less_than(CD_lst:list[CountyDemographics], ed:str, percent:float) -> list[CountyDemographics]:
+    filter_lst = []
+    for county in CD_lst:
+        compare_percent = county.education.get(ed)
+        if compare_percent < percent:
+            filter_lst.append(county)
+    return filter_lst
 
-            county_demo = CountyDemographics(age, county, education, ethnicities, income, population, state)
-            counties.append(county_demo)
+#A function that lists the counties with a specific ethnicities category percentage
+# greater than the given percentage.
+#input: a list of CountyDemographics objects, a string, and a float representing a percent
+#output: a list of CountyDemographics objects
+def ethnicities_greater_than(CD_lst:list[CountyDemographics], eth:str, percent:float) -> list[CountyDemographics]:
+    filter_lst = []
+    for county in CD_lst:
+        compare_percent = county.ethnicities.get(eth)
+        if compare_percent > percent:
+            filter_lst.append(county)
+    return filter_lst
 
-    return counties
+#A function that lists the counties with a specific ethnicities category percentage
+# less than the given percentage.
+#input: a list of CountyDemographics objects, a string, and a float representing a percent
+#output: a list of CountyDemographics objects
+def ethnicities_less_than(CD_lst:list[CountyDemographics], eth:str, percent:float) -> list[CountyDemographics]:
+    filter_lst = []
+    for county in CD_lst:
+        compare_percent = county.ethnicities.get(eth)
+        if compare_percent < percent:
+            filter_lst.append(county)
+    return filter_lst
 
+#A function that lists the counties where the percentage of people below poverty level is
+# greater than the given percentage.
+#input: a list of CountyDemographics objects and a float representing a percent
+#output: a list of CountyDemographics objects
+def below_poverty_level_greater_than(CD_lst:list[CountyDemographics], percent:float) -> list[CountyDemographics]:
+    filter_lst = []
+    for county in CD_lst:
+        compare_percent = county.income.get('Persons Below Poverty Level')
+        if compare_percent > percent:
+            filter_lst.append(county)
+    return filter_lst
 
-# Find the county with the maximum specified attribute
-def find_max_county(counties: list, attribute: str) -> CountyDemographics:
-    max_county = max(counties, key=lambda x: x.income[attribute] if attribute in x.income else 0)
-    return max_county
-
-
-# Filter counties based on a specified attribute and threshold
-def filter_counties(counties: list, attribute: str, threshold: float) -> list:
-    return [county for county in counties if county.income.get(attribute, 0) >= threshold]
+#A function that lists the counties where the percentage of people below poverty level is
+# less than the given percentage.
+#input: a list of CountyDemographics objects and a float representing a percent
+#output: a list of CountyDemographics objects
+def below_poverty_level_less_than(CD_lst:list[CountyDemographics], percent:float) -> list[CountyDemographics]:
+    filter_lst = []
+    for county in CD_lst:
+        compare_percent = county.income.get('Persons Below Poverty Level')
+        if compare_percent < percent:
+            filter_lst.append(county)
+    return filter_lst
